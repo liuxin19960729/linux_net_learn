@@ -1764,15 +1764,15 @@ int __sys_bind(int fd, struct sockaddr __user *umyaddr, int addrlen)
 	struct socket *sock;
 	struct sockaddr_storage address;
 	int err, fput_needed;
-
+	// 根据fd 找到 sock
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
 	if (sock) {
-		err = move_addr_to_kernel(umyaddr, addrlen, &address);
+		err = move_addr_to_kernel(umyaddr, addrlen, &address);// addr 从用户态移动到内核态 
 		if (!err) {
 			err = security_socket_bind(sock,
 						   (struct sockaddr *)&address,
 						   addrlen);
-			if (!err)
+			if (!err)// inet_bind 调用
 				err = sock->ops->bind(sock,
 						      (struct sockaddr *)
 						      &address, addrlen);
@@ -1781,7 +1781,7 @@ int __sys_bind(int fd, struct sockaddr __user *umyaddr, int addrlen)
 	}
 	return err;
 }
-
+// bind 系统调用 
 SYSCALL_DEFINE3(bind, int, fd, struct sockaddr __user *, umyaddr, int, addrlen)
 {
 	return __sys_bind(fd, umyaddr, addrlen);
@@ -1798,7 +1798,7 @@ int __sys_listen(int fd, int backlog)
 	struct socket *sock;
 	int err, fput_needed;
 	int somaxconn;
-
+	// 根据fd找到 sock
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
 	if (sock) {
 		somaxconn = READ_ONCE(sock_net(sock->sk)->core.sysctl_somaxconn);
@@ -1813,7 +1813,7 @@ int __sys_listen(int fd, int backlog)
 	}
 	return err;
 }
-
+// listen 系统调用
 SYSCALL_DEFINE2(listen, int, fd, int, backlog)
 {
 	return __sys_listen(fd, backlog);
@@ -1828,7 +1828,7 @@ struct file *do_accept(struct file *file, unsigned file_flags,
 	int err, len;
 	struct sockaddr_storage address;
 
-	sock = sock_from_file(file);
+	sock = sock_from_file(file);// file获取 sock 监听
 	if (!sock)
 		return ERR_PTR(-ENOTSOCK);
 
@@ -1852,7 +1852,7 @@ struct file *do_accept(struct file *file, unsigned file_flags,
 	err = security_socket_accept(sock, newsock);
 	if (err)
 		goto out_fd;
-
+	// inet_accept accept
 	err = sock->ops->accept(sock, newsock, sock->file->f_flags | file_flags,
 					false);
 	if (err < 0)
